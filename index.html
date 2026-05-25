@@ -305,6 +305,17 @@
       line-height: 1;
       letter-spacing: -0.04em;
       margin-bottom: 5px;
+      transition: color 0.25s ease;
+    }
+
+    @keyframes score-pop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+
+    .metric b.pop {
+      animation: score-pop 0.3s ease;
     }
 
     .metric span {
@@ -362,22 +373,6 @@
           <div class="section-title">Expected behavior</div>
           <div class="note">
             <strong>Two independent bugs are injected.</strong> First, polling the queue before a delayed job is ready should not remove the job. Second, retry attempts should increase when a failed job is scheduled again. The surrounding queue ordering, tenant metadata, and rate-limit accounting should remain unchanged.
-          </div>
-
-          <div class="section-title">Failing tests</div>
-          <div class="test-box">
-            <div class="test">
-              <strong>tests/test_retry_queue.py::test_delayed_retry_is_not_dropped</strong>
-              <p>Expected 1 pending job after early poll, found 0.</p>
-            </div>
-            <div class="test">
-              <strong>tests/test_worker_retry.py::test_failed_job_is_retried_after_delay</strong>
-              <p>Expected job to complete after retry window; job never reappeared.</p>
-            </div>
-            <div class="test">
-              <strong>tests/test_worker_retry.py::test_retry_attempt_count_is_preserved</strong>
-              <p>Expected retry attempt count to increase from 1 to 2.</p>
-            </div>
           </div>
 
           <div class="section-title">Why PDB metrics matter</div>
@@ -750,12 +745,15 @@
       const unit = document.getElementById('unitScore');
       const precision = document.getElementById('precisionScore');
       const recall = document.getElementById('recallScore');
+      [unit, precision, recall].forEach(el => el.classList.remove('pop'));
       unit.textContent = patch.unit;
       precision.textContent = patch.precision;
       recall.textContent = patch.recall;
       unit.className = scoreClass(patch.unit);
       precision.className = scoreClass(patch.precision);
       recall.className = scoreClass(patch.recall);
+      void unit.offsetWidth;
+      [unit, precision, recall].forEach(el => el.classList.add('pop'));
       document.getElementById('patchExplain').innerHTML = patch.explanation;
     }
 
