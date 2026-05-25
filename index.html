@@ -305,17 +305,6 @@
       line-height: 1;
       letter-spacing: -0.04em;
       margin-bottom: 5px;
-      transition: color 0.25s ease;
-    }
-
-    @keyframes score-pop {
-      0%   { transform: scale(1); }
-      40%  { transform: scale(1.18); }
-      100% { transform: scale(1); }
-    }
-
-    .metric b.pop {
-      animation: score-pop 0.3s ease;
     }
 
     .metric span {
@@ -745,15 +734,12 @@
       const unit = document.getElementById('unitScore');
       const precision = document.getElementById('precisionScore');
       const recall = document.getElementById('recallScore');
-      [unit, precision, recall].forEach(el => el.classList.remove('pop'));
       unit.textContent = patch.unit;
       precision.textContent = patch.precision;
       recall.textContent = patch.recall;
       unit.className = scoreClass(patch.unit);
       precision.className = scoreClass(patch.precision);
       recall.className = scoreClass(patch.recall);
-      void unit.offsetWidth;
-      [unit, precision, recall].forEach(el => el.classList.add('pop'));
       document.getElementById('patchExplain').innerHTML = patch.explanation;
     }
 
