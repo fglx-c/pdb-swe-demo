@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDB SWE Example</title>
+  <style>
+    :root {
+      --bg: #f6f2ea;
+      --panel: #fffaf1;
+      --ink: #1f2328;
+      --muted: #6b6257;
+      --line: #ded6c9;
+      --accent: #111111;
+      --soft: #eee5d7;
+      --danger: #7a2e1f;
+      --good: #2e5e3f;
+      --warn: #8a5b18;
+      --code-bg: #191919;
+      --code-ink: #f2eadf;
+      --code-muted: #9c9488;
+      --code-red: #ffb4a2;
+      --code-green: #b8e3c0;
+      --code-warn: #ffd58a;
+      --shadow: 0 18px 50px rgba(31, 35, 40, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top left, rgba(0,0,0,0.05), transparent 28rem), var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    .shell {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 22px 48px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 0.88fr 1.38fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: rgba(255, 250, 241, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+      padding: 16px 18px;
+    }
+
+    .card-head h2 {
+      margin: 0;
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: var(--muted);
+      background: var(--soft);
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .content { padding: 18px; }
+
+    .issue-title {
+      margin: 0 0 10px;
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+
+    .issue-copy {
+      color: var(--muted);
+      margin: 0 0 16px;
+      font-size: 15px;
+    }
+
+    .section-title {
+      margin: 18px 0 8px;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .tree, .note {
+      border: 1px solid var(--line);
+      background: #fbf4e9;
+      border-radius: 16px;
+      padding: 12px 14px;
+      color: #3a342d;
+      font-size: 13px;
+    }
+
+    .tree {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+
+    .note strong { color: var(--ink); }
+
+    .test-box, .eval-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .test, .eval-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fbf4e9;
+      padding: 12px;
+    }
+
+    .test strong, .eval-card strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .test p, .eval-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .eval-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fbf4e9;
+      font-size: 13px;
+    }
+
+    .eval-table th, .eval-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eval-table tr:last-child td { border-bottom: 0; }
+    .eval-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .eval-table td b { font-size: 16px; }
+    .high { color: var(--good); }
+    .mid { color: var(--warn); }
+    .low { color: var(--danger); }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 12px 12px 0;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 780;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #fffaf1;
+      border-color: var(--accent);
+    }
+
+    .code-wrap {
+      background: var(--code-bg);
+      color: var(--code-ink);
+      overflow: auto;
+      max-height: 690px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12.6px;
+      line-height: 1.52;
+      tab-size: 2;
+    }
+
+    .line {
+      display: grid;
+      grid-template-columns: 46px minmax(760px, 1fr);
+      padding: 0 18px 0 0;
+    }
+
+    .ln {
+      color: var(--code-muted);
+      text-align: right;
+      padding-right: 14px;
+      user-select: none;
+    }
+
+    .bug { background: rgba(122, 46, 31, 0.36); }
+    .near { background: rgba(138, 91, 24, 0.20); }
+    .test-line { background: rgba(46, 94, 63, 0.18); }
+    .comment { color: #a7a096; }
+
+    .patch-panel {
+      border-top: 1px solid var(--line);
+      background: var(--panel);
+      padding: 14px;
+    }
+
+    .patch-toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    button {
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 850;
+      background: transparent;
+      color: var(--accent);
+    }
+
+    button.active, button.primary {
+      background: var(--accent);
+      color: #fffaf1;
+    }
+
+    .patch-diff {
+      margin: 0;
+      padding: 12px 0;
+      background: #191919;
+      color: var(--code-ink);
+      font-size: 12.4px;
+      overflow: auto;
+      max-height: 380px;
+      border-radius: 16px;
+    }
+
+    .diff-line {
+      display: block;
+      padding: 0 14px;
+      white-space: pre;
+    }
+
+    .diff-add { color: var(--code-green); }
+    .diff-remove { color: var(--code-red); }
+    .diff-meta { color: #c7bfae; }
+    .diff-note { color: var(--code-warn); }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fbf4e9;
+      padding: 12px;
+    }
+
+    .metric b {
+      display: block;
+      font-size: 25px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-bottom: 5px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .explain {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #fbf4e9;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .explain strong { color: var(--ink); }
+
+    @media (max-width: 940px) {
+      .grid { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="grid">
+      <aside class="card">
+        <div class="card-head">
+          <h2>Example Question</h2>
+        </div>
+        <div class="content">
+          <h3 class="issue-title">Issue: Delayed retry jobs disappear and rate limits reset too aggressively</h3>
+          <p class="issue-copy">
+            This synthetic SWE example demonstrates why PDB needs edit-level metrics. A model can pass the unit tests by rewriting broad parts of the queue and worker logic, but PDB distinguishes that from a precise debugging patch.
+          </p>
+
+          <div class="section-title">Repository</div>
+          <div class="tree">taskforge/
+├── taskforge/
+│   ├── queue.py          # in-memory durable queue
+│   ├── worker.py         # retry execution loop
+│   ├── rate_limit.py     # per-tenant token bucket
+│   └── models.py
+└── tests/
+    ├── test_retry_queue.py
+    ├── test_worker_retry.py
+    └── test_rate_limit.py</div>
+
+          <div class="section-title">Expected behavior</div>
+          <div class="note">
+            <strong>Two independent bugs are injected.</strong> First, polling the queue before a delayed job is ready should not remove the job. Second, retry attempts should increase when a failed job is scheduled again. The surrounding queue ordering, tenant metadata, and rate-limit accounting should remain unchanged.
+          </div>
+
+          <div class="section-title">Failing tests</div>
+          <div class="test-box">
+            <div class="test">
+              <strong>tests/test_retry_queue.py::test_delayed_retry_is_not_dropped</strong>
+              <p>Expected 1 pending job after early poll, found 0.</p>
+            </div>
+            <div class="test">
+              <strong>tests/test_worker_retry.py::test_failed_job_is_retried_after_delay</strong>
+              <p>Expected job to complete after retry window; job never reappeared.</p>
+            </div>
+            <div class="test">
+              <strong>tests/test_worker_retry.py::test_retry_attempt_count_is_preserved</strong>
+              <p>Expected retry attempt count to increase from 1 to 2.</p>
+            </div>
+          </div>
+
+          <div class="section-title">Why PDB metrics matter</div>
+          <table class="eval-table">
+            <thead>
+              <tr>
+                <th>Patch</th>
+                <th>Unit Score</th>
+                <th>Edit-level Precision</th>
+                <th>Bug-level Recall</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Precise Patch</td>
+                <td><b class="high">1.00</b></td>
+                <td><b class="high">1.00</b></td>
+                <td><b class="high">1.00</b></td>
+              </tr>
+              <tr>
+                <td>Over-edit Patch</td>
+                <td><b class="high">1.00</b></td>
+                <td><b class="low">0.33</b></td>
+                <td><b class="high">1.00</b></td>
+              </tr>
+              <tr>
+                <td>Partial Patch</td>
+                <td><b class="low">0.00</b></td>
+                <td><b class="high">1.00</b></td>
+                <td><b class="mid">0.50</b></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="explain">
+            <strong>Unit Score</strong> only asks whether the final code passes tests. <strong>Edit-level Precision</strong> penalizes unnecessary edits. <strong>Bug-level Recall</strong> gives partial credit when the model fixes one bug but misses another.
+          </div>
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Buggy Repository Snapshot</h2>
+          <span class="pill">Ground truth hidden from agent</span>
+        </div>
+
+        <nav class="tabs" aria-label="file tabs">
+          <button class="tab active" data-file="queue" onclick="switchFile('queue')">taskforge/queue.py</button>
+          <button class="tab" data-file="worker" onclick="switchFile('worker')">taskforge/worker.py</button>
+          <button class="tab" data-file="rate" onclick="switchFile('rate')">taskforge/rate_limit.py</button>
+          <button class="tab" data-file="tests" onclick="switchFile('tests')">tests</button>
+        </nav>
+
+        <div class="code-wrap">
+          <pre id="code"></pre>
+        </div>
+
+        <div class="patch-panel">
+          <div class="patch-toolbar">
+            <button class="active" data-patch="precise" onclick="showPatch('precise')">Precise patch</button>
+            <button data-patch="partial" onclick="showPatch('partial')">Partial patch</button>
+            <button data-patch="over" onclick="showPatch('over')">Rewrite-heavy patch</button>
+          </div>
+
+          <pre id="patch" class="patch-diff"></pre>
+
+          <div class="metric-grid">
+            <div class="metric"><b id="unitScore">1.00</b><span>Unit Score</span></div>
+            <div class="metric"><b id="precisionScore">1.00</b><span>Edit-level Precision</span></div>
+            <div class="metric"><b id="recallScore">1.00</b><span>Bug-level Recall</span></div>
+          </div>
+
+          <div id="patchExplain" class="explain"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const files = {
+      queue: [
+        ['1', 'from __future__ import annotations', ''],
+        ['2', '', ''],
+        ['3', 'from dataclasses import replace', ''],
+        ['4', 'from time import time', ''],
+        ['5', 'from typing import Dict, Iterable, List, Optional', ''],
+        ['6', '', ''],
+        ['7', 'from .models import Job', ''],
+        ['8', '', ''],
+        ['9', '', ''],
+        ['10', 'class MemoryQueue:', ''],
+        ['11', '    """Small in-memory queue used by the worker and tests.', ''],
+        ['12', '', ''],
+        ['13', '    The queue preserves insertion order, supports delayed execution,', ''],
+        ['14', '    and keeps tenant metadata so worker-level rate limiting can be tested.', ''],
+        ['15', '    """', ''],
+        ['16', '', ''],
+        ['17', '    def __init__(self):', ''],
+        ['18', '        self._jobs: Dict[str, Job] = {}', ''],
+        ['19', '        self._order: List[str] = []', ''],
+        ['20', '', ''],
+        ['21', '    def __len__(self) -> int:', ''],
+        ['22', '        return len(self._jobs)', ''],
+        ['23', '', ''],
+        ['24', '    def enqueue(self, job: Job) -> None:', ''],
+        ['25', '        if job.id not in self._jobs:', ''],
+        ['26', '            self._order.append(job.id)', ''],
+        ['27', '        self._jobs[job.id] = job', ''],
+        ['28', '', ''],
+        ['29', '    def pending_ids(self) -> List[str]:', ''],
+        ['30', '        return [job_id for job_id in self._order if job_id in self._jobs]', ''],
+        ['31', '', ''],
+        ['32', '    def iter_pending(self) -> Iterable[Job]:', ''],
+        ['33', '        for job_id in self.pending_ids():', ''],
+        ['34', '            yield self._jobs[job_id]', ''],
+        ['35', '', ''],
+        ['36', '    def pop_ready(self, now: Optional[float] = None) -> Optional[Job]:', ''],
+        ['37', '        now = time() if now is None else now', ''],
+        ['38', '        for job_id in list(self._order):', ''],
+        ['39', '            job = self._jobs.get(job_id)', ''],
+        ['40', '            if job is None:', ''],
+        ['41', '                self._order.remove(job_id)', ''],
+        ['42', '                continue', ''],
+        ['43', '            if job.status != "queued":', ''],
+        ['44', '                continue', ''],
+        ['45', '            if job.run_at > now:', 'bug'],
+        ['46', '                self._jobs.pop(job_id, None)  # BUG 1: early polling drops delayed job', 'bug'],
+        ['47', '                self._order.remove(job_id)', 'bug'],
+        ['48', '                return None', 'bug'],
+        ['49', '            self._order.remove(job_id)', ''],
+        ['50', '            return self._jobs.pop(job_id)', ''],
+        ['51', '        return None', ''],
+        ['52', '', ''],
+        ['53', '    def mark_retry(self, job: Job, delay_seconds: int, now: Optional[float] = None) -> Job:', ''],
+        ['54', '        now = time() if now is None else now', ''],
+        ['55', '        retry_job = replace(', ''],
+        ['56', '            job,', ''],
+        ['57', '            status="queued",', ''],
+        ['58', '            attempts=job.attempts,  # BUG 2: retry does not consume an attempt', 'bug'],
+        ['59', '            run_at=now + delay_seconds,', ''],
+        ['60', '            last_error=None,', ''],
+        ['61', '        )', ''],
+        ['62', '        self.enqueue(retry_job)', ''],
+        ['63', '        return retry_job', ''],
+        ['64', '', ''],
+        ['65', '    def cancel(self, job_id: str) -> bool:', ''],
+        ['66', '        existed = job_id in self._jobs', ''],
+        ['67', '        self._jobs.pop(job_id, None)', ''],
+        ['68', '        if job_id in self._order:', ''],
+        ['69', '            self._order.remove(job_id)', ''],
+        ['70', '        return existed', ''],
+        ['71', '', ''],
+        ['72', '    def snapshot(self) -> List[dict]:', ''],
+        ['73', '        return [self._jobs[job_id].to_dict() for job_id in self.pending_ids()]', '']
+      ],
+      worker: [
+        ['1', 'from __future__ import annotations', ''],
+        ['2', '', ''],
+        ['3', 'from typing import Optional', ''],
+        ['4', '', ''],
+        ['5', 'from .models import Job', ''],
+        ['6', 'from .queue import MemoryQueue', ''],
+        ['7', 'from .rate_limit import TenantLimiter', ''],
+        ['8', '', ''],
+        ['9', '', ''],
+        ['10', 'class Worker:', ''],
+        ['11', '    def __init__(self, queue: MemoryQueue, limiter: TenantLimiter, max_attempts: int = 3):', ''],
+        ['12', '        self.queue = queue', ''],
+        ['13', '        self.limiter = limiter', ''],
+        ['14', '        self.max_attempts = max_attempts', ''],
+        ['15', '', ''],
+        ['16', '    def tick(self, now: Optional[float] = None) -> Optional[Job]:', ''],
+        ['17', '        job = self.queue.pop_ready(now=now)', ''],
+        ['18', '        if job is None:', ''],
+        ['19', '            return None', ''],
+        ['20', '', ''],
+        ['21', '        if not self.limiter.allow(job.tenant_id, now=now):', 'near'],
+        ['22', '            job.status = "queued"', 'near'],
+        ['23', '            self.queue.enqueue(job)', 'near'],
+        ['24', '            return None', 'near'],
+        ['25', '', ''],
+        ['26', '        try:', ''],
+        ['27', '            job.run()', ''],
+        ['28', '            job.status = "completed"', ''],
+        ['29', '            job.last_error = None', ''],
+        ['30', '            return job', ''],
+        ['31', '        except Exception as exc:', ''],
+        ['32', '            job.status = "failed"', ''],
+        ['33', '            job.last_error = str(exc)', ''],
+        ['34', '            if job.attempts < self.max_attempts:', 'near'],
+        ['35', '                return self.queue.mark_retry(job, delay_seconds=30, now=now)', 'near'],
+        ['36', '            return job', '']
+      ],
+      rate: [
+        ['1', 'from __future__ import annotations', ''],
+        ['2', '', ''],
+        ['3', 'from dataclasses import dataclass', ''],
+        ['4', 'from time import time', ''],
+        ['5', 'from typing import Dict, Optional', ''],
+        ['6', '', ''],
+        ['7', '', ''],
+        ['8', '@dataclass', ''],
+        ['9', 'class Bucket:', ''],
+        ['10', '    tokens: int', ''],
+        ['11', '    reset_at: float', ''],
+        ['12', '', ''],
+        ['13', '', ''],
+        ['14', 'class TenantLimiter:', ''],
+        ['15', '    def __init__(self, capacity: int = 10, window_seconds: int = 60):', ''],
+        ['16', '        self.capacity = capacity', ''],
+        ['17', '        self.window_seconds = window_seconds', ''],
+        ['18', '        self._buckets: Dict[str, Bucket] = {}', ''],
+        ['19', '', ''],
+        ['20', '    def allow(self, tenant_id: str, now: Optional[float] = None) -> bool:', ''],
+        ['21', '        now = time() if now is None else now', ''],
+        ['22', '        bucket = self._buckets.get(tenant_id)', ''],
+        ['23', '        if bucket is None or bucket.reset_at <= now:', ''],
+        ['24', '            bucket = Bucket(tokens=self.capacity, reset_at=now + self.window_seconds)', ''],
+        ['25', '            self._buckets[tenant_id] = bucket', ''],
+        ['26', '        if bucket.tokens <= 0:', ''],
+        ['27', '            return False', ''],
+        ['28', '        bucket.tokens -= 1', ''],
+        ['29', '        return True', ''],
+        ['30', '', ''],
+        ['31', '    def remaining(self, tenant_id: str) -> int:', ''],
+        ['32', '        bucket = self._buckets.get(tenant_id)', ''],
+        ['33', '        return self.capacity if bucket is None else bucket.tokens', '']
+      ],
+      tests: [
+        ['1', 'def test_delayed_retry_is_not_dropped(queue):', ''],
+        ['2', '    job = Job(id="j1", tenant_id="acme", status="queued", attempts=1, run_at=130.0)', ''],
+        ['3', '    queue.enqueue(job)', ''],
+        ['4', '    assert queue.pop_ready(now=100.0) is None', 'test-line'],
+        ['5', '    assert len(queue) == 1', 'test-line'],
+        ['6', '    assert queue.pop_ready(now=131.0).id == "j1"', 'test-line'],
+        ['7', '', ''],
+        ['8', 'def test_failed_job_is_retried_after_delay(worker, queue):', ''],
+        ['9', '    job = flaky_job(id="j2", tenant_id="acme", attempts=1, run_at=100.0)', ''],
+        ['10', '    queue.enqueue(job)', ''],
+        ['11', '    worker.tick(now=100.0)', 'test-line'],
+        ['12', '    assert queue.pop_ready(now=120.0) is None', 'test-line'],
+        ['13', '    assert queue.pop_ready(now=131.0).id == "j2"', 'test-line'],
+        ['14', '', ''],
+        ['15', 'def test_retry_attempt_count_is_preserved(queue):', ''],
+        ['16', '    job = Job(id="j3", tenant_id="acme", status="failed", attempts=1, run_at=0.0)', ''],
+        ['17', '    retry = queue.mark_retry(job, delay_seconds=30, now=100.0)', 'test-line'],
+        ['18', '    assert retry.attempts == 2', 'test-line'],
+        ['19', '    assert retry.run_at == 130.0', 'test-line']
+      ]
+    };
+
+    const patches = {
+      precise: {
+        unit: '1.00', precision: '1.00', recall: '1.00',
+        explanation: '<strong>Precise patch:</strong> passes all tests and edits only the two bug locations. PDB rewards it with full unit score, full edit-level precision, and full bug-level recall.',
+        diff: [
+          ['meta', '--- a/taskforge/queue.py'],
+          ['meta', '+++ b/taskforge/queue.py'],
+          ['meta', '@@ def pop_ready(self, now=None):'],
+          ['remove', '-            if job.run_at > now:'],
+          ['remove', '-                self._jobs.pop(job_id, None)'],
+          ['remove', '-                self._order.remove(job_id)'],
+          ['remove', '-                return None'],
+          ['add', '+            if job.run_at > now:'],
+          ['add', '+                continue'],
+          ['meta', '@@ def mark_retry(self, job, delay_seconds, now=None):'],
+          ['remove', '-            attempts=job.attempts,'],
+          ['add', '+            attempts=job.attempts + 1,']
+        ]
+      },
+      over: {
+        unit: '1.00', precision: '0.33', recall: '1.00',
+        explanation: '<strong>Over-edit patch:</strong> also passes all tests and fixes both injected bugs, so unit score and bug-level recall are high. But it rewrites queue ordering, changes retry behavior, and touches rate-limit logic that was not broken. PDB lowers edit-level precision, exposing regeneration-style repair that unit tests miss.',
+        diff: [
+          ['meta', '--- a/taskforge/queue.py'],
+          ['meta', '+++ b/taskforge/queue.py'],
+          ['meta', '@@ class MemoryQueue:'],
+          ['remove', '-        self._order: List[str] = []'],
+          ['add', '+        self._order: List[str] = []  # rebuilt on every poll'],
+          ['meta', '@@ def pop_ready(self, now=None):'],
+          ['remove', '-        for job_id in list(self._order):'],
+          ['remove', '-            job = self._jobs.get(job_id)'],
+          ['remove', '-            if job is None:'],
+          ['remove', '-                self._order.remove(job_id)'],
+          ['remove', '-                continue'],
+          ['remove', '-            if job.status != "queued":'],
+          ['remove', '-                continue'],
+          ['remove', '-            if job.run_at > now:'],
+          ['remove', '-                self._jobs.pop(job_id, None)'],
+          ['remove', '-                self._order.remove(job_id)'],
+          ['remove', '-                return None'],
+          ['remove', '-            self._order.remove(job_id)'],
+          ['remove', '-            return self._jobs.pop(job_id)'],
+          ['add', '+        ready = [j for j in self._jobs.values() if j.status == "queued" and j.run_at <= now]'],
+          ['add', '+        if not ready:'],
+          ['add', '+            return None'],
+          ['add', '+        ready.sort(key=lambda j: (j.run_at, j.id))'],
+          ['add', '+        job = ready[0]'],
+          ['add', '+        self.cancel(job.id)'],
+          ['add', '+        return job'],
+          ['meta', '@@ def mark_retry(self, job, delay_seconds, now=None):'],
+          ['remove', '-            attempts=job.attempts,'],
+          ['add', '+            attempts=job.attempts + 1,'],
+          ['note', '# unrelated extra change in worker.py'],
+          ['remove', '-        if not self.limiter.allow(job.tenant_id, now=now):'],
+          ['add', '+        if not self.limiter.allow(str(job.tenant_id), now=now):'],
+          ['note', '# unrelated extra change in rate_limit.py'],
+          ['remove', '-        if bucket is None or bucket.reset_at <= now:'],
+          ['add', '+        if bucket is None or bucket.reset_at < now:']
+        ]
+      },
+      partial: {
+        unit: '0.00', precision: '1.00', recall: '0.50',
+        explanation: '<strong>Partial patch:</strong> edits exactly one true bug and does not add unnecessary changes, so edit-level precision is high. But it misses the retry-attempt bug, so unit tests still fail and bug-level recall gives partial credit instead of collapsing the result into a single failure.',
+        diff: [
+          ['meta', '--- a/taskforge/queue.py'],
+          ['meta', '+++ b/taskforge/queue.py'],
+          ['meta', '@@ def pop_ready(self, now=None):'],
+          ['remove', '-            if job.run_at > now:'],
+          ['remove', '-                self._jobs.pop(job_id, None)'],
+          ['remove', '-                self._order.remove(job_id)'],
+          ['remove', '-                return None'],
+          ['add', '+            if job.run_at > now:'],
+          ['add', '+                continue']
+        ]
+      }
+    };
+
+    function escapeHtml(value) {
+      return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderCode(name) {
+      const code = document.getElementById('code');
+      code.innerHTML = files[name].map(([num, text, cls]) => {
+        const className = cls ? `line ${cls}` : 'line';
+        return `<span class="${className}"><span class="ln">${num}</span><span>${escapeHtml(text)}</span></span>`;
+      }).join('');
+    }
+
+    function switchFile(name) {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.file === name);
+      });
+      renderCode(name);
+    }
+
+    function scoreClass(score) {
+      const value = Number(score);
+      if (value >= 0.95) return 'high';
+      if (value >= 0.50) return 'mid';
+      return 'low';
+    }
+
+    function showPatch(name) {
+      document.querySelectorAll('.patch-toolbar button').forEach(button => {
+        button.classList.toggle('active', button.dataset.patch === name);
+      });
+
+      const patch = patches[name];
+      document.getElementById('patch').innerHTML = patch.diff.map(([kind, text]) => {
+        const cls = kind === 'add' ? 'diff-add' : kind === 'remove' ? 'diff-remove' : kind === 'note' ? 'diff-note' : 'diff-meta';
+        return `<span class="diff-line ${cls}">${escapeHtml(text)}</span>`;
+      }).join('');
+
+      const unit = document.getElementById('unitScore');
+      const precision = document.getElementById('precisionScore');
+      const recall = document.getElementById('recallScore');
+      unit.textContent = patch.unit;
+      precision.textContent = patch.precision;
+      recall.textContent = patch.recall;
+      unit.className = scoreClass(patch.unit);
+      precision.className = scoreClass(patch.precision);
+      recall.className = scoreClass(patch.recall);
+      document.getElementById('patchExplain').innerHTML = patch.explanation;
+    }
+
+
+    renderCode('queue');
+    showPatch('precise');
+  </script>
+</body>
+</html>
